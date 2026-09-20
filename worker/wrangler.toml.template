@@ -144,6 +144,10 @@ ENABLE_AUTO_REPLY = false
 # JUNK_MAIL_CHECK_LIST = ["spf", "dkim", "dmarc"]
 # junk mail force pass list: every configured method must explicitly return pass
 # JUNK_MAIL_FORCE_PASS_LIST = ["spf", "dkim", "dmarc"]
+# Enable marketing email deduplication (first receive saves and forwards normally, subsequent duplicate marketing emails are skipped)
+# ENABLE_MARKETING_DEDUP = true
+# Marketing email deduplication cache TTL in seconds (default: 604800, i.e. 7 days)
+# MARKETING_DEDUP_TTL = 604800
 # remove attachment if size exceed 2MB, mail maybe mising some information due to parsing
 # REMOVE_EXCEED_SIZE_ATTACHMENT = true
 # remove all attachment, mail maybe mising some information due to parsing

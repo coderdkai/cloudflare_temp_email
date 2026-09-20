@@ -10,6 +10,7 @@
 
 ### Features
 
+- feat: |Marketing Dedup| Support marketing email fingerprinting and KV deduplication (`ENABLE_MARKETING_DEDUP`, `MARKETING_DEDUP_TTL`); promotional emails are stored and forwarded only on first receipt, while subsequent identical emails across mailboxes are skipped to prevent spam and storage bloat
 - feat: |AI Extract| Add `AI_EXTRACT_MODE` to explicitly choose local rules only (`local`) or prefer Workers AI (`ai`); defaults to local rules when unset so mail content is never sent to AI. **Upgrade note**: deployments that relied on the Workers AI binding to enable AI extraction automatically must set `AI_EXTRACT_MODE = "ai"`
 
 ### Bug Fixes
