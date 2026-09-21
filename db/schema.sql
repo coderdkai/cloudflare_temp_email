@@ -136,3 +136,20 @@ CREATE TABLE IF NOT EXISTS redeem_codes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_redeem_codes_type ON redeem_codes(redeem_type);
+
+CREATE TABLE IF NOT EXISTS mail_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    message_id TEXT,
+    source TEXT,
+    address TEXT,
+    subject TEXT,
+    action TEXT,
+    forwarded_to TEXT,
+    fingerprint TEXT,
+    reason TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_mail_logs_address ON mail_logs(address);
+CREATE INDEX IF NOT EXISTS idx_mail_logs_created_at ON mail_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_mail_logs_action ON mail_logs(action);

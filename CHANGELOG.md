@@ -10,7 +10,8 @@
 
 ### Features
 
-- feat: |邮件去重| 支持营销邮件指纹识别与 KV 缓存去重（`ENABLE_MARKETING_DEDUP`、`MARKETING_DEDUP_TTL`），同一营销推广内容仅首次存库并转发，后续相同内容跨邮箱自动去重拦截，防止轰炸与数据库膨胀
+- feat: |审计日志| 新增全量进站邮件流转与去重审计日志系统，实时写入 KV 暂存（0 D1 写入开销），支持每日 Cron 定时批量归档入库 D1（保留 1 年自动滚动清理）；提供 Admin 鉴权接口 `GET /admin/mail_logs`，支持分页与动作/邮箱/主题多维度检索
+- feat: |邮件去重| 支持营销邮件指纹识别与 KV 缓存去重（`ENABLE_MARKETING_DEDUP`、`MARKETING_DEDUP_TTL`），同一营销推广内容仅首次存库并转发，后续相同内容跨邮箱自动去重拦截，防止轰炸与数据库膨胀；增强对 Apple Hide My Email 隐私转发与 SendGrid 营销标头的识别与发件域溯源，支持 HTML 正文文本提取兜底指纹计算
 - feat: |AI 识别| 新增 `AI_EXTRACT_MODE`，可显式选择仅用本地规则（`local`）或优先用 Workers AI（`ai`）识别邮件；不填默认使用本地规则，邮件内容不会发送给 AI。**升级注意**：原先依赖 Workers AI 绑定自动启用 AI 识别的部署需设置 `AI_EXTRACT_MODE = "ai"`
 
 ### Bug Fixes
