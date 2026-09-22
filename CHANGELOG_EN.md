@@ -10,6 +10,8 @@
 
 ### Features
 
+- feat: |Silent Forward Window| Add `disable_forward_minutes` optional parameter to address creation APIs (`/api/new_address` and `/admin/new_address`); during the designated cooldown window, incoming emails are safely stored for script extraction but suppressed from forwarding to personal inboxes, automatically resuming normal forwarding afterwards
+- feat: |Audit Quota Guard| Isolate normal delivered emails from writing to KV audit logs, only logging drops and rejections to strictly protect against exceeding Workers KV 1,000 daily put operations (HTTP 429) during high-throughput automated registrations
 - feat: |Audit Logs| Add full inbound email audit logging system with real-time zero-cost KV buffering, automated daily batch archival into D1 via Cron with a 1-year retention policy, and an Admin API `GET /admin/mail_logs` supporting pagination and multi-field filtering (action/address/source/subject)
 - feat: |Marketing Dedup| Support marketing email fingerprinting and KV deduplication (`ENABLE_MARKETING_DEDUP`, `MARKETING_DEDUP_TTL`); promotional emails are stored and forwarded only on first receipt, while subsequent identical emails across mailboxes are skipped to prevent spam and storage bloat; enhance Apple Hide My Email forward and SendGrid marketing header recognition, origin sender domain recovery, and HTML fallback body extraction for robust cross-channel fingerprinting
 - feat: |AI Extract| Add `AI_EXTRACT_MODE` to explicitly choose local rules only (`local`) or prefer Workers AI (`ai`); defaults to local rules when unset so mail content is never sent to AI. **Upgrade note**: deployments that relied on the Workers AI binding to enable AI extraction automatically must set `AI_EXTRACT_MODE = "ai"`

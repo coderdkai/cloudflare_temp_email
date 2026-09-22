@@ -98,11 +98,17 @@ export async function resolveTargetForwardAddresses(from: string, to: string, en
 }
 
 /**
- * 实时记录邮件流转审计日志到 KV 中（高吞吐、0 D1 写入开销）
+ * 实时记录邮件流转审计日志到 KV 中
+ * 注意：正常放行入库的邮件已完整保存在 D1 raw_mails 中，无需再写 KV，
+ * 从而节省大量 KV.put 配额；KV 审计只记录异常和拦截事件（DEDUP_SKIPPED / JUNK / REJECTED 等）。
  * Key 格式: mail_audit_log:<timestamp_ms>:<random_suffix>
  */
 export async function recordMailAuditLog(env: Bindings, entry: MailAuditLogEntry): Promise<void> {
 	if (!env.KV) return;
+	// 关键节流优化：正常放行的邮件不写 KV 审计，彻底避免高频注册拉爆 KV 每日 1000 次限制
+	if (entry.action === 'FORWARDED' || entry.action === 'TRANSACTION_FORWARD') {
+		return;
+	}
 	try {
 		const now = Date.now();
 		const rand = Math.random().toString(36).substring(2, 8);
@@ -110,6 +116,7 @@ export async function recordMailAuditLog(env: Bindings, entry: MailAuditLogEntry
 		// KV 暂存保留 7 天，等待 Cron 定时任务批量落库 D1
 		await env.KV.put(kvKey, JSON.stringify(entry), { expirationTtl: 604800 });
 	} catch (error) {
-		console.error('recordMailAuditLog error:', error);
+		// 捕获所有 KV 限制错误（如 429），确保邮件入站处理永远不受影响、不中断
+		console.error('recordMailAuditLog error (ignored to protect mail delivery):', error);
 	}
 }
