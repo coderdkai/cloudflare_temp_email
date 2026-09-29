@@ -9,7 +9,8 @@ import { ptBRMessages } from './locales/source/ptBR'
 
 import type { SupportedLocale } from './locale-registry'
 
-type LocaleTree = Record<string, unknown>
+type LocaleMessageValue = string | number | boolean | { [key: string]: LocaleMessageValue }
+type LocaleTree = Record<string, LocaleMessageValue>
 type SourceLocale = Extract<SupportedLocale, 'en' | 'zh'>
 type AdditionalLocale = Exclude<SupportedLocale, SourceLocale>
 
@@ -35,7 +36,8 @@ const setNestedValue = (target: LocaleTree, path: string, value: unknown) => {
     current = current[segment] as LocaleTree
   }
 
-  current[segments.at(-1) as string] = value
+  // SAFETY: Translation values are guaranteed to be string or nested dictionaries
+  current[segments.at(-1) as string] = value as LocaleMessageValue
 }
 
 const buildSourceLocaleMessages = (locale: SourceLocale) => {

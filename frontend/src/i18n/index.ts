@@ -10,7 +10,8 @@ const i18n = createI18n({
     legacy: false, // you must set `false`, to use Composition API
     locale: getInitialLocale(),
     fallbackLocale: FALLBACK_LOCALE,
-    messages: I18N_MESSAGES,
+    // SAFETY: I18N_MESSAGES matches vue-i18n LocaleMessage dictionary structure built from message registry
+    messages: I18N_MESSAGES as unknown as Record<string, Record<string, string>>,
     missingWarn: false,
     fallbackWarn: false,
 })
