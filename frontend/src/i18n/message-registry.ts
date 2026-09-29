@@ -2705,6 +2705,22 @@ export const MESSAGE_REGISTRY = {
       "en": "You can manually input the following multiple select input and enter",
       "zh": "您可以手动输入以下多选输入框, 回车增加"
     },
+    "sender_whitelist": {
+      "en": "Sender Whitelist (Bypass Marketing Dedup & Direct Forwarding)",
+      "zh": "发件人/域名白名单(跳过营销去重并直接放行转发)"
+    },
+    "sender_whitelist_placeholder": {
+      "en": "Enter sender emails or domains (e.g. signin.aws, openai.com)",
+      "zh": "请输入发件邮箱或域名(如 signin.aws、openai.com)"
+    },
+    "subject_keywords_whitelist": {
+      "en": "Subject Keywords Whitelist (Bypass Marketing Dedup & Direct Forwarding)",
+      "zh": "邮件主题白名单关键词(跳过营销去重并直接放行转发)"
+    },
+    "subject_keywords_whitelist_placeholder": {
+      "en": "Enter keywords like AWS, verification, etc.",
+      "zh": "请输入放行关键词(如 AWS、验证码、构建者等)"
+    },
     "verified_address_list": {
       "en": "Verified Address List(Can send email by cf internal api)",
       "zh": "已验证地址列表(可通过 cf 内部 api 发送邮件)"
@@ -3122,5 +3138,7 @@ export const getMessageSource = <N extends MessageNamespace>(
   key: MessageKey<N>,
   locale: 'en' | 'zh',
 ) => {
-  return MESSAGE_REGISTRY[namespace]?.[key]?.[locale]
+  // SAFETY: Every namespace entry in MESSAGE_REGISTRY is statically defined with { en: string, zh: string } entries
+  const ns = MESSAGE_REGISTRY[namespace] as unknown as Record<string, Record<'en' | 'zh', string>>
+  return ns?.[key as string]?.[locale]
 }

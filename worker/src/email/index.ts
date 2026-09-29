@@ -63,12 +63,19 @@ async function email(message: ForwardableEmailMessage, env: Bindings, ctx: Execu
 		console.error('check junk mail error', error);
 	}
 
-	// check if unknown address mail
+	// load email rules settings
+	let emailRuleSettings: EmailRuleSettings | null = null;
 	try {
-		const emailRuleSettings = await getJsonSetting<EmailRuleSettings>(
+		emailRuleSettings = await getJsonSetting<EmailRuleSettings>(
 			{ env: env } as Context<HonoCustomType>,
 			CONSTANTS.EMAIL_RULE_SETTINGS_KEY,
 		);
+	} catch (error) {
+		console.error('get emailRuleSettings error', error);
+	}
+
+	// check if unknown address mail
+	try {
 		if (emailRuleSettings?.blockReceiveUnknowAddressEmail) {
 			const db_address_id = await env.DB.prepare(`SELECT id FROM address where name = ? `).bind(toAddress).first('id');
 			if (!db_address_id) {
@@ -108,7 +115,13 @@ async function email(message: ForwardableEmailMessage, env: Bindings, ctx: Execu
 	// marketing email detection and deduplication
 	if (env.KV && getBooleanValue(env.ENABLE_MARKETING_DEDUP)) {
 		try {
-			const isMarketing = isMarketingEmailByHeaders(parsedEmailForAudit?.headers, parsedEmailForAudit?.subject);
+			const isMarketing = isMarketingEmailByHeaders(
+				parsedEmailForAudit?.headers,
+				parsedEmailForAudit?.subject,
+				emailRuleSettings?.subjectKeywordsWhitelist,
+				message.from,
+				emailRuleSettings?.senderWhitelist,
+			);
 			if (isMarketing) {
 				const bodyContent = parsedEmailForAudit?.text || extractTextFromHtml(parsedEmailForAudit?.html);
 				const fingerprint = await computeMarketingFingerprint(

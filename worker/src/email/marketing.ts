@@ -92,30 +92,64 @@ export function extractEffectiveSenderDomain(
 const TRANSACTIONAL_SUBJECT_KEYWORDS: readonly string[] = [
 	'verification code',
 	'verify your',
+	'verify',
 	'verification',
 	'security code',
 	'auth code',
+	'confirm your',
 	'confirmation code',
+	'confirm account',
 	'one-time password',
 	'otp',
+	'passcode',
 	'your code',
 	'code -',
 	'code challenge',
+	'login code',
+	'access code',
 	'password reset',
 	'reset your password',
+	'two-factor',
+	'2fa',
+	'mfa',
 	'invoice',
 	'payment',
+	'receipt',
 	'account suspended',
 	'account termination',
 	'account security',
+	'account alert',
 	'验证码',
+	'验证您的',
+	'邮箱验证',
+	'身份验证',
+	'登录验证',
+	'双重验证',
+	'两步验证',
+	'双重认证',
+	'安全验证',
+	'验证',
 	'校验码',
+	'校验',
 	'安全码',
+	'授权码',
+	'动态码',
+	'动态密码',
+	'动态口令',
+	'临时密码',
+	'安全代码',
+	'激活码',
+	'激活您的',
+	'激活账号',
+	'确认您的',
+	'确认账号',
 	'重置密码',
 	'修改密码',
+	'找回密码',
 	'账单',
 	'支付凭证',
 	'扣费',
+	'扣款',
 	'订单确认',
 ];
 
@@ -140,18 +174,68 @@ const MARKETING_HEADER_NAMES: readonly string[] = [
 /**
  * 判断是否包含事务/验证类高优先级的关键词（白名单）
  */
-export function isTransactionalEmail(subject: string | undefined | null): boolean {
+export function isTransactionalEmail(subject: string | undefined | null, customKeywords?: string[] | undefined | null): boolean {
 	if (!subject) return false;
 	const lowerSubj = subject.toLowerCase();
-	return TRANSACTIONAL_SUBJECT_KEYWORDS.some((kw) => lowerSubj.includes(kw));
+	if (TRANSACTIONAL_SUBJECT_KEYWORDS.some((kw) => lowerSubj.includes(kw))) {
+		return true;
+	}
+	if (customKeywords && Array.isArray(customKeywords)) {
+		return customKeywords.some((kw) => {
+			const clean = kw?.trim()?.toLowerCase();
+			return clean && clean.length > 0 && lowerSubj.includes(clean);
+		});
+	}
+	return false;
+}
+
+/**
+ * 判断发件人或 Apple 混淆转发原始发件人是否命中白名单
+ */
+export function isWhitelistedSender(
+	from: string | undefined | null,
+	headers?: Record<string, string>[] | undefined | null,
+	senderWhitelist?: string[] | undefined | null,
+): boolean {
+	if (!senderWhitelist || !Array.isArray(senderWhitelist) || senderWhitelist.length === 0) {
+		return false;
+	}
+	const candidateSenders: string[] = [];
+	if (from) candidateSenders.push(from.trim().toLowerCase());
+	if (headers && Array.isArray(headers)) {
+		const hme = headers.find((h) => h.key && h.key.trim().toLowerCase() === 'x-icloud-hme');
+		if (hme && hme.value) {
+			const sMatch = hme.value.match(/\bs=([^\s;]+)/i);
+			if (sMatch && sMatch[1]) candidateSenders.push(sMatch[1].trim().toLowerCase());
+		}
+		const fromH = headers.find((h) => h.key && h.key.trim().toLowerCase() === 'from');
+		if (fromH && fromH.value) candidateSenders.push(fromH.value.trim().toLowerCase());
+	}
+
+	return senderWhitelist.some((rule) => {
+		const r = rule?.trim()?.toLowerCase();
+		if (!r) return false;
+		return candidateSenders.some((sender) => sender.includes(r));
+	});
 }
 
 /**
  * 依据邮件头判断是否为商业/营销群发邮件
  */
-export function isMarketingEmailByHeaders(headers: Record<string, string>[] | undefined | null, subject?: string | null): boolean {
-	// 1. 白名单保护：若标题明确为验证码或重要事务通知，绝不判定为营销邮件
-	if (isTransactionalEmail(subject)) {
+export function isMarketingEmailByHeaders(
+	headers: Record<string, string>[] | undefined | null,
+	subject?: string | null,
+	customSubjectKeywords?: string[] | undefined | null,
+	from?: string | null,
+	senderWhitelist?: string[] | undefined | null,
+): boolean {
+	// 1. 白名单发件人保护：若发件人或原始发件人命中白名单，绝不判定为营销邮件
+	if (isWhitelistedSender(from, headers, senderWhitelist)) {
+		return false;
+	}
+
+	// 2. 白名单主题保护：若标题明确为验证码或重要事务通知（或命中自定义白名单关键词），绝不判定为营销邮件
+	if (isTransactionalEmail(subject, customSubjectKeywords)) {
 		return false;
 	}
 

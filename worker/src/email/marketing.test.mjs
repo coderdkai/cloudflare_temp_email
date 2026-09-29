@@ -15,9 +15,14 @@ test('isTransactionalEmail returns true for verification codes and notices', () 
 	assert.equal(isTransactionalEmail('Your Telegram Code - 287486'), true);
 	assert.equal(isTransactionalEmail('Your verification code is 123456'), true);
 	assert.equal(isTransactionalEmail('【某某平台】您的验证码是 8899'), true);
+	assert.equal(isTransactionalEmail('验证您的 AWS 构建者 ID 电子邮件地址'), true);
+	assert.equal(isTransactionalEmail('Verify your email address'), true);
 	assert.equal(isTransactionalEmail("We couldn't process your payment for team My Team"), true);
 	assert.equal(isTransactionalEmail('Your 2026-08 invoice is available'), true);
 	assert.equal(isTransactionalEmail('Try Grok Bot free for 3 days'), false);
+	// Custom whitelist keyword
+	assert.equal(isTransactionalEmail('Special internal message', ['Special internal']), true);
+	assert.equal(isTransactionalEmail('Special internal message', ['Other keyword']), false);
 });
 
 test('isMarketingEmailByHeaders respects transactional whitelist over marketing headers', () => {
@@ -27,8 +32,13 @@ test('isMarketingEmailByHeaders respects transactional whitelist over marketing 
 	];
 	// With transactional subject, should NOT be marked as marketing
 	assert.equal(isMarketingEmailByHeaders(headers, 'Your verification code: 654321'), false);
+	assert.equal(isMarketingEmailByHeaders(headers, '验证您的 AWS 构建者 ID 电子邮件地址'), false);
 	// With promotional subject, SHOULD be marked as marketing
 	assert.equal(isMarketingEmailByHeaders(headers, 'Try Grok Bot free for 3 days'), true);
+	// With custom whitelist subject keyword
+	assert.equal(isMarketingEmailByHeaders(headers, 'Promotional Sale', ['Promotional Sale']), false);
+	// With sender whitelist
+	assert.equal(isMarketingEmailByHeaders(headers, 'Promotional Sale', [], 'aws@signin.aws', ['signin.aws']), false);
 });
 
 test('isMarketingEmailByHeaders identifies various marketing headers including SendGrid', () => {

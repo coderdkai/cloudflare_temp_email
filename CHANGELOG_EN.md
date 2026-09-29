@@ -10,6 +10,7 @@
 
 ### Features
 
+- feat: |Email Whitelist| Expand built-in transactional/verification subject whitelist (covering "verify", "activate", "confirm", 2FA, passcodes, etc.), and add "Subject Keywords Whitelist" and "Sender Whitelist" options in the Admin Account Settings UI to allow bypassing marketing deduplication and guaranteeing delivery/forwarding
 - feat: |Silent Forward Window| Add `disable_forward_minutes` optional parameter to address creation APIs (`/api/new_address` and `/admin/new_address`); during the designated cooldown window, incoming emails are safely stored for script extraction but suppressed from forwarding to personal inboxes, automatically resuming normal forwarding afterwards
 - feat: |Audit Quota Guard| Isolate normal delivered emails from writing to KV audit logs, only logging drops and rejections to strictly protect against exceeding Workers KV 1,000 daily put operations (HTTP 429) during high-throughput automated registrations
 - feat: |Audit Logs| Add full inbound email audit logging system with real-time zero-cost KV buffering, automated daily batch archival into D1 via Cron with a 1-year retention policy, and an Admin API `GET /admin/mail_logs` supporting pagination and multi-field filtering (action/address/source/subject)

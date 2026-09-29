@@ -18,7 +18,9 @@ const verifiedAddressList = ref([])
 const fromBlockList = ref([])
 const emailRuleSettings = ref({
     blockReceiveUnknowAddressEmail: false,
-    emailForwardingList: []
+    emailForwardingList: [],
+    subjectKeywordsWhitelist: [],
+    senderWhitelist: []
 })
 const ADDRESS_CREATION_SUBDOMAIN_MATCH_MODE = {
     FOLLOW_ENV: 'follow_env',
@@ -264,7 +266,9 @@ const fetchData = async ({ suppressErrorMessage = false } = {}) => {
         noLimitSendAddressList.value = res.noLimitSendAddressList || []
         emailRuleSettings.value = {
             blockReceiveUnknowAddressEmail: res.emailRuleSettings?.blockReceiveUnknowAddressEmail || false,
-            emailForwardingList: res.emailRuleSettings?.emailForwardingList || []
+            emailForwardingList: res.emailRuleSettings?.emailForwardingList || [],
+            subjectKeywordsWhitelist: res.emailRuleSettings?.subjectKeywordsWhitelist || [],
+            senderWhitelist: res.emailRuleSettings?.senderWhitelist || []
         }
         addressCreationSubdomainMatchStatus.value = {
             envConfigured: !!res.addressCreationSubdomainMatchStatus?.envConfigured,
@@ -421,6 +425,26 @@ onMounted(async () => {
             </n-form-item-row>
             <n-form-item-row :label="t('fromBlockList')">
                 <n-select v-model:value="fromBlockList" filterable multiple tag :placeholder="t('fromBlockList')">
+                    <template #empty>
+                        <n-text depth="3">
+                            {{ t('manualInputPrompt') }}
+                        </n-text>
+                    </template>
+                </n-select>
+            </n-form-item-row>
+            <n-form-item-row :label="t('sender_whitelist')">
+                <n-select v-model:value="emailRuleSettings.senderWhitelist" filterable multiple tag
+                    :placeholder="t('sender_whitelist_placeholder')">
+                    <template #empty>
+                        <n-text depth="3">
+                            {{ t('manualInputPrompt') }}
+                        </n-text>
+                    </template>
+                </n-select>
+            </n-form-item-row>
+            <n-form-item-row :label="t('subject_keywords_whitelist')">
+                <n-select v-model:value="emailRuleSettings.subjectKeywordsWhitelist" filterable multiple tag
+                    :placeholder="t('subject_keywords_whitelist_placeholder')">
                     <template #empty>
                         <n-text depth="3">
                             {{ t('manualInputPrompt') }}
