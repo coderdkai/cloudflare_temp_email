@@ -148,6 +148,11 @@ ENABLE_AUTO_REPLY = false
 # ENABLE_MARKETING_DEDUP = true
 # Marketing email deduplication cache TTL in seconds (default: 604800, i.e. 7 days)
 # MARKETING_DEDUP_TTL = 604800
+# Automatically request the sender's unsubscribe link for every marketing mail.
+# Dedup keeps only the first copy per campaign and unsubscribe links are per-recipient,
+# so this is what actually unsubscribes each address. Only links on the sender's own
+# base domain are requested; mailto-only targets are never auto-sent.
+# ENABLE_MARKETING_AUTO_UNSUBSCRIBE = false
 # remove attachment if size exceed 2MB, mail maybe mising some information due to parsing
 # REMOVE_EXCEED_SIZE_ATTACHMENT = true
 # remove all attachment, mail maybe mising some information due to parsing

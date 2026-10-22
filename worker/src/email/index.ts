@@ -13,7 +13,8 @@ import { EmailRuleSettings } from '../models';
 import { CONSTANTS } from '../constants';
 import { storeRawMail } from './storage';
 import { isMarketingEmailByHeaders, computeMarketingFingerprint, extractTextFromHtml } from './marketing';
-import { recordMailAuditLog, resolveTargetForwardAddresses } from './audit_log';
+import { autoUnsubscribe } from './auto_unsubscribe';
+import { recordMailAuditLog } from './audit_log';
 
 async function email(message: ForwardableEmailMessage, env: Bindings, ctx: ExecutionContext) {
 	const toAddress = normalizeAddressDomain(message.to);
@@ -106,59 +107,52 @@ async function email(message: ForwardableEmailMessage, env: Bindings, ctx: Execu
 		console.error('remove attachment error', error);
 	}
 
-	// resolve target forward addresses early for audit logging
-	const targetForwardAddresses = await resolveTargetForwardAddresses(message.from, toAddress, env);
-	let auditAction: 'FORWARDED' | 'DEDUP_SKIPPED' | 'TRANSACTION_FORWARD' = 'FORWARDED';
-	let auditFingerprint: string | null = null;
-	const parsedEmailForAudit = await commonParseMail(parsedEmailContext);
+	const parsedEmailForDedup = await commonParseMail(parsedEmailContext);
 
 	// marketing email detection and deduplication
-	if (env.KV && getBooleanValue(env.ENABLE_MARKETING_DEDUP)) {
+	const autoUnsubscribeEnabled = getBooleanValue(env.ENABLE_MARKETING_AUTO_UNSUBSCRIBE);
+	const dedupEnabled = !!(env.KV && getBooleanValue(env.ENABLE_MARKETING_DEDUP));
+	if (autoUnsubscribeEnabled || dedupEnabled) {
 		try {
 			const isMarketing = isMarketingEmailByHeaders(
-				parsedEmailForAudit?.headers,
-				parsedEmailForAudit?.subject,
+				parsedEmailForDedup?.headers,
+				parsedEmailForDedup?.subject,
 				emailRuleSettings?.subjectKeywordsWhitelist,
 				message.from,
 				emailRuleSettings?.senderWhitelist,
 			);
 			if (isMarketing) {
-				const bodyContent = parsedEmailForAudit?.text || extractTextFromHtml(parsedEmailForAudit?.html);
-				const fingerprint = await computeMarketingFingerprint(
-					message.from,
-					parsedEmailForAudit?.subject,
-					bodyContent,
-					parsedEmailForAudit?.headers,
-				);
-				auditFingerprint = fingerprint;
-				const kvKey = `mkt_hash:${fingerprint}`;
-				const existing = await env.KV.get(kvKey);
-				if (existing) {
-					console.log(`Duplicate marketing email detected from ${message.from} to ${toAddress}, skip storing and forwarding.`);
-					await recordMailAuditLog(env, {
-						message_id,
-						source: message.from,
-						address: toAddress,
-						subject: parsedEmailForAudit?.subject || null,
-						action: 'DEDUP_SKIPPED',
-						forwarded_to: targetForwardAddresses,
-						fingerprint,
-						reason: 'Duplicate marketing email hash hit in KV',
-						created_at: createdAtIso,
-					});
-					return;
+				// 去重只会保留首封，退订链接又是按收件人定制的，必须在提前 return 之前让每个地址各自退订；
+				// 用 waitUntil 避免阻塞入库与转发
+				if (autoUnsubscribeEnabled) {
+					ctx.waitUntil(autoUnsubscribe(
+						message.from,
+						parsedEmailForDedup?.headers,
+						parsedEmailForDedup?.html,
+						parsedEmailForDedup?.text,
+					));
 				}
-				auditAction = 'FORWARDED';
-				const ttl = Number(env.MARKETING_DEDUP_TTL) || 604800;
-				await env.KV.put(kvKey, '1', { expirationTtl: ttl });
-			} else {
-				auditAction = 'TRANSACTION_FORWARD';
+				if (dedupEnabled) {
+					const bodyContent = parsedEmailForDedup?.text || extractTextFromHtml(parsedEmailForDedup?.html);
+					const fingerprint = await computeMarketingFingerprint(
+						message.from,
+						parsedEmailForDedup?.subject,
+						bodyContent,
+						parsedEmailForDedup?.headers,
+					);
+					const kvKey = `mkt_hash:${fingerprint}`;
+					const existing = await env.KV.get(kvKey);
+					if (existing) {
+						console.log(`Duplicate marketing email detected from ${message.from} to ${toAddress}, skip storing and forwarding.`);
+						return;
+					}
+					const ttl = Number(env.MARKETING_DEDUP_TTL) || 604800;
+					await env.KV.put(kvKey, '1', { expirationTtl: ttl });
+				}
 			}
 		} catch (error) {
 			console.error('marketing dedup error, proceeding normally', error);
 		}
-	} else {
-		auditAction = 'FORWARDED';
 	}
 	// save email
 	const storedMailId = await storeRawMail(env, message.from, toAddress, message_id, parsedEmailContext.rawEmail)
@@ -176,19 +170,6 @@ async function email(message: ForwardableEmailMessage, env: Bindings, ctx: Execu
 
 	// forward email
 	await forwardEmail(message, env);
-
-	// record audit log for forwarded email (either first marketing or transactional)
-	await recordMailAuditLog(env, {
-		message_id,
-		source: message.from,
-		address: toAddress,
-		subject: parsedEmailForAudit?.subject || null,
-		action: auditAction,
-		forwarded_to: targetForwardAddresses,
-		fingerprint: auditFingerprint,
-		reason: auditAction === 'TRANSACTION_FORWARD' ? 'Transactional mail forwarded' : 'First marketing mail forwarded',
-		created_at: createdAtIso,
-	});
 
 	// AI email content extraction
 	const aiExtractResult = await extractEmailInfo(parsedEmailContext, env, message_id, toAddress);

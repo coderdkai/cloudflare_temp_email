@@ -80,6 +80,7 @@ type Bindings = {
 
 	ENABLE_MARKETING_DEDUP: string | boolean | undefined;
 	MARKETING_DEDUP_TTL: number | string | undefined;
+	ENABLE_MARKETING_AUTO_UNSUBSCRIBE: string | boolean | undefined;
 
 	ENABLE_ANOTHER_WORKER: string | boolean | undefined;
 	ANOTHER_WORKER_LIST: string | AnotherWorker[] | undefined;
