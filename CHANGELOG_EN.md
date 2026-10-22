@@ -10,6 +10,8 @@
 
 ### Features
 
+- feat: |Webhook| Add email filters with condition/AND/OR/NOT nodes, nesting, string and native regex matching, visual/JSON editing and rule checking; preserve all original From headers while still removing attachments when From is missing or invalid (issue #1155)
+- feat: |User| Search bound mailboxes by email address in address management with accurate pagination (issue #1156)
 - feat: |Email Whitelist| Expand built-in transactional/verification subject whitelist (covering "verify", "activate", "confirm", 2FA, passcodes, etc.), and add "Subject Keywords Whitelist" and "Sender Whitelist" options in the Admin Account Settings UI to allow bypassing marketing deduplication and guaranteeing delivery/forwarding
 - feat: |Silent Forward Window| Add `disable_forward_minutes` optional parameter to address creation APIs (`/api/new_address` and `/admin/new_address`); during the designated cooldown window, incoming emails are safely stored for script extraction but suppressed from forwarding to personal inboxes, automatically resuming normal forwarding afterwards
 - feat: |Audit Quota Guard| Isolate normal delivered emails from writing to KV audit logs, only logging drops and rejections to strictly protect against exceeding Workers KV 1,000 daily put operations (HTTP 429) during high-throughput automated registrations
@@ -21,12 +23,17 @@
 
 ### Bug Fixes
 
+- fix: |Worker| Process unknown-mail, unbound-address, and empty-address cleanup in bounded batches to avoid D1 timeouts on large backlogs
+- fix: |User| Bind the mailbox transfer confirmation button to the existing request loading state, fixing the undefined loading variable
+- fix: |Mail| Check the SMTP envelope sender and every From email address against sender blacklists; parse addresses independently so body parsing failures or multiple From addresses cannot skip matching; preserve envelope checks on address parsing errors
 - fix: |KV Quota| Marketing dedup hits (`DEDUP_SKIPPED`) no longer write KV audit logs, keeping only `console.log`; each dedup-skip event previously consumed one KV write, so a single marketing blast could blow through the 1,000 daily write quota (measured 1,229 writes in one day, all from one campaign), and the audit-only `resolveTargetForwardAddresses` dead code is removed
 - fix: |AI Extract| In `ai` mode, an address allowlist miss now skips only the Workers AI call and still falls back to local verification-code extraction
+- fix: |Telegram| Fall back to HTML-to-text conversion when plain text body is empty, preventing "parse failed" messages in Telegram notifications
 
 ### Improvements
 
 - feat: |AI Extract| Improve local verification-code rules: also read the mail subject; support codes before keywords (e.g. `116352（动态验证码）`, `ABC123 is your code`), `G-123456` prefixes, grouped / spaced / zero-width-split / full-width codes, and Russian, Spanish, Portuguese, French, German, Italian, Turkish and Hebrew keywords; reject numbers longer than 8 digits, decimals and amounts, times, digits in URLs and email addresses, tracking / order / voucher codes and letters-only words; only accept keyword-less numbers in stricter positions; bound input length and remove regex backtracking risks
+- feat: |Frontend| Unify desktop and mobile mail summaries with prominent subjects, full sender identities and body previews; use theme-aware reader buttons and attachment-count badges, add keyboard-accessible actions and a mail-details dialog
 
 ## v1.12.0
 

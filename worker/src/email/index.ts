@@ -21,7 +21,7 @@ async function email(message: ForwardableEmailMessage, env: Bindings, ctx: Execu
 	const message_id = message.headers.get('Message-ID');
 	const createdAtIso = new Date().toISOString();
 
-	if (await isBlocked(message.from, env)) {
+	if (await isBlocked(message, env)) {
 		message.setReject('Reject from address');
 		console.log(`Reject message from ${message.from} to ${toAddress}`);
 		await recordMailAuditLog(env, {
@@ -42,6 +42,7 @@ async function email(message: ForwardableEmailMessage, env: Bindings, ctx: Execu
 	};
 
 	// check if junk mail
+
 	try {
 		const is_junk = await check_if_junk_mail(env, toAddress, parsedEmailContext, message.headers.get('Message-ID'));
 		if (is_junk) {

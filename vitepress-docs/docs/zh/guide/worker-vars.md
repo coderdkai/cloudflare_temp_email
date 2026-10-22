@@ -96,7 +96,7 @@
 
 | 变量名                          | 类型      | 说明                                                                       | 示例                       |
 | ------------------------------- | --------- | -------------------------------------------------------------------------- | -------------------------- |
-| `BLACK_LIST`                    | 文本      | 黑名单，用于过滤发件人，逗号分隔                                           | `gov.cn,edu.cn`            |
+| `BLACK_LIST`                    | 文本      | 发件人黑名单，逗号分隔；对 SMTP 信封发件人与邮件头 From 中解析出的全部邮箱地址进行区分大小写的子串匹配，任意一个命中即拒收。地址解析独立于正文解析；后台发件人黑名单规则相同，不匹配显示名称 | `gov.cn,edu.cn`            |
 | `ENABLE_CHECK_JUNK_MAIL`        | 文本/JSON | 是否启用垃圾邮件检查，配合下列两个列表使用                                 | `false`                    |
 | `JUNK_MAIL_CHECK_LIST`          | JSON      | 存在性检查；已注册的失败/错误结果判定为垃圾邮件，`none` 和 SPF/DKIM `neutral` 按不存在处理 | `["spf", "dkim", "dmarc"]` |
 | `JUNK_MAIL_FORCE_PASS_LIST`     | JSON      | 强制通过检查；每一项都必须明确返回 `pass`，否则判定为垃圾邮件              | `["spf", "dkim", "dmarc"]` |
@@ -104,7 +104,7 @@
 | `REMOVE_EXCEED_SIZE_ATTACHMENT` | 文本/JSON | 如果附件大小超过 2MB，则删除附件，邮件可能由于解析而丢失一些信息           | `true`                     |
 | `REMOVE_ALL_ATTACHMENT`         | 文本/JSON | 移除所有附件，邮件可能由于解析而丢失一些信息                               | `true`                     |
 | `ENABLE_MAIL_GZIP`             | 文本/JSON | 启用后新邮件将 Gzip 压缩存储到 `raw_blob` 字段，可节省 D1 数据库空间。已有明文 `raw` 数据自动兼容读取。**启用前请先执行数据库迁移（`Admin -> 快速设置 -> 数据库 -> 升级数据库 Schema` 或 `POST /admin/db_migration`），确保 `raw_blob` 列已创建。该功能会增加压缩/解压 CPU 开销，建议使用 Cloudflare Worker 付费 Plan 再开启。** | `true`                     |
-| `CLEANUP_BATCH_SIZE`           | 数字      | 邮件、发件箱及按创建/活跃时间清理地址时的单次处理上限，默认 `3000`，有效范围 `1-5000`。较小值可降低单次 D1 压力，较大值可加快积压数据清理 | `3000` |
+| `CLEANUP_BATCH_SIZE`           | 数字      | 内置邮件、发件箱及地址清理任务的单次处理上限，默认 `3000`，有效范围 `1-5000`。较小值可降低单次 D1 压力，较大值可加快积压数据清理 | `3000` |
 
 > [!NOTE]
 > 认证结果遵循各自规范：SPF `none` 表示没有可检查的域名或 SPF 记录，SPF `neutral` 必须与 `none` 相同处理；DKIM `none` 表示邮件未签名，DKIM `neutral` 同样按未签名处理；DMARC `none` 表示没有适用的 DMARC 策略。未注册结果和不支持的方法版本也会被忽略。`JUNK_MAIL_CHECK_LIST` 将这些结果视为认证方法不存在，`JUNK_MAIL_FORCE_PASS_LIST` 仍只接受明确且受支持的 `pass`
