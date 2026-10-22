@@ -15,10 +15,13 @@
 - feat: |审计优化| 审计日志全面隔离正常放行邮件的 KV 写入，仅对丢弃和拦截事件写 KV，彻底杜绝大批量注册邮件触发 Workers KV 每日 1000 次写入配额限制（HTTP 429）
 - feat: |审计日志| 新增全量进站邮件流转与去重审计日志系统，实时写入 KV 暂存（0 D1 写入开销），支持每日 Cron 定时批量归档入库 D1（保留 1 年自动滚动清理）；提供 Admin 鉴权接口 `GET /admin/mail_logs`，支持分页与动作/邮箱/主题多维度检索
 - feat: |邮件去重| 支持营销邮件指纹识别与 KV 缓存去重（`ENABLE_MARKETING_DEDUP`、`MARKETING_DEDUP_TTL`），同一营销推广内容仅首次存库并转发，后续相同内容跨邮箱自动去重拦截，防止轰炸与数据库膨胀；增强对 Apple Hide My Email 隐私转发与 SendGrid 营销标头的识别与发件域溯源，支持 HTML 正文文本提取兜底指纹计算
+- feat: |邮件退订| 邮件详情页新增「取消订阅」按钮：解析 `List-Unsubscribe` / `List-Unsubscribe-Post`（RFC 2369 / 8058），缺失时回退扫描正文中的退订链接（含中英文关键词），支持一键退订 POST 与普通 GET 两种方式，无需打开营销邮件即可直接退订；新增 `GET|POST /api/mail/:mail_id/unsubscribe` 与用户中心对应的 `/user_api/mail/:mail_id/unsubscribe`，仅提供 `mailto:` 退订地址时给出邮件退订链接
+- feat: |自动退订| 新增 `ENABLE_MARKETING_AUTO_UNSUBSCRIBE`，收到营销邮件时按收件人各自的退订链接自动请求退订（`ctx.waitUntil` 不阻塞入库转发）。由于去重只保留每批首封邮件、且退订链接按收件人定制，此前每个地址都会反复收到同一批营销邮件却只能手动退订；该开关与 `ENABLE_MARKETING_DEDUP` 相互独立，仅请求与发件人主域一致的链接，`mailto:` 退订不会自动发信
 - feat: |AI 识别| 新增 `AI_EXTRACT_MODE`，可显式选择仅用本地规则（`local`）或优先用 Workers AI（`ai`）识别邮件；不填默认使用本地规则，邮件内容不会发送给 AI。**升级注意**：原先依赖 Workers AI 绑定自动启用 AI 识别的部署需设置 `AI_EXTRACT_MODE = "ai"`
 
 ### Bug Fixes
 
+- fix: |KV 配额| 营销去重命中（`DEDUP_SKIPPED`）不再写 KV 审计日志，仅保留 `console.log`；每次去重跳过事件此前各消耗 1 次 KV 写入，单次营销群发即可击穿每日 1000 次写入配额（实测单日 1229 次写入全部来自同一批群发），同时移除仅为审计服务的 `resolveTargetForwardAddresses` 死代码
 - fix: |AI 识别| `ai` 模式下地址未命中 AI 提取白名单时只跳过 Workers AI 调用，仍回退到本地规则提取验证码
 
 ### Improvements
