@@ -55,6 +55,21 @@ Enable `ENABLE_MAIL_READ_STATUS` and upgrade the database first. Historical mail
 
 - `PATCH /api/mails/:id/read`: set one mail belonging to the current address; use `{ "isUnread": true }` for unread or `{ "isUnread": false }` for read
 
+## Mail Unsubscribe API
+
+No extra configuration. The worker reads the `List-Unsubscribe` / `List-Unsubscribe-Post` headers (RFC 2369 / 8058) and, when they are missing, falls back to scanning the body for a link the sender labels as unsubscribe (`unsubscribe`, `opt-out`, `退订`, `取消订阅`, and similar). The mail detail view shows an "Unsubscribe" button whenever a target can be resolved; clicking it makes the worker call the sender's unsubscribe link directly.
+
+- `GET /api/mail/:mail_id/unsubscribe`: inspect the unsubscribe options of one mail
+- `POST /api/mail/:mail_id/unsubscribe`: perform the unsubscribe and return `{ success, status, oneClick }`
+
+```json
+{"available": true, "url": "https://r.openai.com/asm/unsubscribe/?user_id=...", "mailto": "", "oneClick": false}
+```
+
+When `List-Unsubscribe-Post` declares one-click support the request is a `POST` with `List-Unsubscribe=One-Click`; otherwise it is a plain `GET` of the link (equivalent to clicking it in a browser). Mails that only offer a `mailto:` target are not unsubscribed server-side — the UI offers an "Unsubscribe by email" link instead.
+
+The same two endpoints exist under the user center as `GET|POST /user_api/mail/:mail_id/unsubscribe`, authenticated with the user JWT (`x-user-token`) for mails under the addresses bound to that user. The admin panel uses `GET|POST /admin/mail/:mail_id/unsubscribe` with `x-admin-auth`, which works for any mail regardless of the mailbox it belongs to.
+
 ## Admin Get Mail API
 
 Fetch a single mail by mail ID without a mailbox JWT. Authenticate with `x-admin-auth`.

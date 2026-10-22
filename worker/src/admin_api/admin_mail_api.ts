@@ -1,6 +1,15 @@
 import { Context } from "hono";
 import { handleMailListQuery } from "../common";
 import { resolveRawEmailRow } from "../gzip";
+import { respondUnsubscribe, respondUnsubscribeInfo } from "../mails_api/unsubscribe_api";
+import type { RawMailRow } from "../models";
+
+const loadMailRow = async (c: Context<HonoCustomType>): Promise<RawMailRow | null> => {
+    const { mail_id } = c.req.param();
+    return await c.env.DB.prepare(
+        `SELECT * FROM raw_mails WHERE id = ?`
+    ).bind(mail_id).first<RawMailRow>();
+}
 
 export default {
     getMails: async (c: Context<HonoCustomType>) => {
@@ -41,5 +50,11 @@ export default {
         return c.json({
             success: success
         })
+    },
+    getUnsubscribe: async (c: Context<HonoCustomType>) => {
+        return await respondUnsubscribeInfo(c, await loadMailRow(c));
+    },
+    unsubscribe: async (c: Context<HonoCustomType>) => {
+        return await respondUnsubscribe(c, await loadMailRow(c));
     }
 }

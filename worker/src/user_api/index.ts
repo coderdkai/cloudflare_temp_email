@@ -17,6 +17,8 @@ api.get('/user_api/settings', settings.settings);
 // mail api
 api.get('/user_api/mails', user_mail_api.getMails);
 api.delete('/user_api/mails/:id', user_mail_api.deleteMail);
+api.get('/user_api/mail/:mail_id/unsubscribe', user_mail_api.getUnsubscribe);
+api.post('/user_api/mail/:mail_id/unsubscribe', user_mail_api.unsubscribe);
 
 // send mail api
 api.get('/user_api/address/:address_id/settings', user_send_mail_api.settings);

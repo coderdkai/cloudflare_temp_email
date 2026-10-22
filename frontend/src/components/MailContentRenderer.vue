@@ -1,17 +1,20 @@
 <script setup>
 import { ref, computed, watch } from "vue";
+import { useMessage } from 'naive-ui'
 import { useScopedI18n } from '@/i18n/app'
 import { CloudDownloadRound, ReplyFilled, ForwardFilled, FullscreenRound, ImageRound } from '@vicons/material'
 import ShadowHtmlComponent from "./ShadowHtmlComponent.vue";
 import AiExtractInfo from "./AiExtractInfo.vue";
+import { api } from '../api'
 import { getDownloadEmlUrl } from '../utils/email-parser';
 import { blockRemoteContent } from '../utils/remote-content-policy';
 import { utcToLocalDate } from '../utils';
 import { useGlobalState } from '../store';
 
-const { preferShowTextMail, useIframeShowMail, useUTCDate, isDark, autoLoadRemoteImages } = useGlobalState();
+const { preferShowTextMail, useIframeShowMail, useUTCDate, isDark, autoLoadRemoteImages, jwt, userJwt, adminAuth } = useGlobalState();
 
 const { t } = useScopedI18n('components.MailContentRenderer')
+const message = useMessage()
 
 const props = defineProps({
   mail: {
@@ -124,6 +127,55 @@ const handleSaveToS3 = async (filename, blob) => {
   }
 };
 
+// 退订：地址 JWT(`/api`)、用户 JWT(`/user_api`)、Admin(`/admin`) 是三套鉴权，取当前能读到这封邮件的那一套
+const unsubscribeApi = ref('');
+const unsubscribeTarget = ref(null);
+const unsubscribeLoading = ref(false);
+
+const loadUnsubscribeTarget = async (mailId) => {
+  unsubscribeApi.value = '';
+  unsubscribeTarget.value = null;
+  // 没有对应凭证的接口不必试探，避免无意义的 401
+  const endpoints = [
+    [jwt.value, '/api/mail'],
+    [userJwt.value, '/user_api/mail'],
+    [adminAuth.value, '/admin/mail'],
+  ]
+    .filter(([credential]) => typeof credential === 'string' && credential.trim() !== '' && credential !== 'undefined')
+    .map(([, apiBase]) => apiBase);
+
+  for (const apiBase of endpoints) {
+    try {
+      const res = await api.fetch(`${apiBase}/${mailId}/unsubscribe`, { showLoading: false });
+      unsubscribeApi.value = apiBase;
+      unsubscribeTarget.value = res?.available ? res : null;
+      return;
+    } catch (error) {
+      // 当前鉴权读不到这封邮件，换另一套再试
+    }
+  }
+};
+
+const handleUnsubscribe = async () => {
+  unsubscribeLoading.value = true;
+  try {
+    const res = await api.fetch(`${unsubscribeApi.value}/${props.mail.id}/unsubscribe`, {
+      method: 'POST',
+      showLoading: false,
+    });
+    if (res?.success) message.success(t('unsubscribeSuccess'));
+    else message.warning(t('unsubscribeFailed'));
+  } catch (error) {
+    message.error(t('unsubscribeFailed'));
+  } finally {
+    unsubscribeLoading.value = false;
+  }
+};
+
+watch(() => props.mail.id, (mailId) => {
+  void loadUnsubscribeTarget(mailId);
+}, { immediate: true });
+
 </script>
 
 <template>
@@ -144,6 +196,19 @@ const handleSaveToS3 = async (filename, blob) => {
       </n-tag>
 
       <!-- 操作按钮 -->
+      <n-popconfirm v-if="unsubscribeTarget && unsubscribeTarget.url" @positive-click="handleUnsubscribe">
+        <template #trigger>
+          <n-button size="small" tertiary type="warning" :loading="unsubscribeLoading">
+            {{ t('unsubscribe') }}
+          </n-button>
+        </template>
+        {{ t('unsubscribeTip') }}
+      </n-popconfirm>
+      <n-button v-else-if="unsubscribeTarget" tag="a" target="_blank" size="small" tertiary type="warning"
+        :href="unsubscribeTarget.mailto">
+        {{ t('unsubscribeByMail') }}
+      </n-button>
+
       <n-popconfirm v-if="enableUserDeleteEmail" @positive-click="handleDelete">
         <template #trigger>
           <n-button tertiary type="error" size="small">{{ t('delete') }}</n-button>

@@ -666,6 +666,11 @@ export const ptBRMessages = {
   "components.MailContentRenderer.markAsUnread": "Marcar como não lido",
   "components.MailContentRenderer.loadRemoteImages": "Carregar imagens",
   "components.MailContentRenderer.remoteImagesBlocked": "{count} recursos externos foram bloqueados para proteger sua privacidade",
+  "components.MailContentRenderer.unsubscribe": "Cancelar inscrição",
+  "components.MailContentRenderer.unsubscribeTip": "Cancelar a inscrição desta lista de e-mails? Uma solicitação será enviada diretamente ao link de descadastro do remetente.",
+  "components.MailContentRenderer.unsubscribeSuccess": "Solicitação de descadastro enviada",
+  "components.MailContentRenderer.unsubscribeFailed": "Falha ao cancelar a inscrição",
+  "components.MailContentRenderer.unsubscribeByMail": "Cancelar por e-mail",
   "views.user.AddressManagement.itemCount": "Total",
   "views.index.SimpleIndex.readStatusUpdated": "Status de leitura atualizado",
   "views.common.Appearance.autoLoadRemoteImages": "Carregar automaticamente imagens externas no corpo do e-mail"

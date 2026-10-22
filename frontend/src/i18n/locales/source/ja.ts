@@ -666,6 +666,11 @@ export const jaMessages = {
   "components.MailContentRenderer.markAsUnread": "未読にする",
   "components.MailContentRenderer.loadRemoteImages": "画像を読み込む",
   "components.MailContentRenderer.remoteImagesBlocked": "プライバシー保護のため、{count} 件の外部リソースをブロックしました",
+  "components.MailContentRenderer.unsubscribe": "配信停止",
+  "components.MailContentRenderer.unsubscribeTip": "このメーリングリストの配信を停止しますか？送信者の配信停止リンクに直接リクエストします。",
+  "components.MailContentRenderer.unsubscribeSuccess": "配信停止リクエストを送信しました",
+  "components.MailContentRenderer.unsubscribeFailed": "配信停止に失敗しました",
+  "components.MailContentRenderer.unsubscribeByMail": "メールで配信停止",
   "views.user.AddressManagement.itemCount": "合計",
   "views.index.SimpleIndex.readStatusUpdated": "既読状態を更新しました",
   "views.common.Appearance.autoLoadRemoteImages": "メール本文の外部画像を自動的に読み込む"

@@ -666,6 +666,11 @@ export const esMessages = {
   "components.MailContentRenderer.markAsUnread": "Marcar como no leído",
   "components.MailContentRenderer.loadRemoteImages": "Cargar imágenes",
   "components.MailContentRenderer.remoteImagesBlocked": "Se bloquearon {count} recursos remotos para proteger tu privacidad",
+  "components.MailContentRenderer.unsubscribe": "Cancelar suscripción",
+  "components.MailContentRenderer.unsubscribeTip": "¿Cancelar la suscripción a esta lista de correo? Se llamará directamente al enlace de cancelación del remitente.",
+  "components.MailContentRenderer.unsubscribeSuccess": "Solicitud de cancelación enviada",
+  "components.MailContentRenderer.unsubscribeFailed": "No se pudo cancelar la suscripción",
+  "components.MailContentRenderer.unsubscribeByMail": "Cancelar por correo",
   "views.user.AddressManagement.itemCount": "Total",
   "views.index.SimpleIndex.readStatusUpdated": "Estado de lectura actualizado",
   "views.common.Appearance.autoLoadRemoteImages": "Cargar automáticamente las imágenes externas del correo"

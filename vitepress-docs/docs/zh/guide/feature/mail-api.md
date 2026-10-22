@@ -55,6 +55,21 @@ print(response.json())
 
 - `PATCH /api/mails/:id/read`：设置当前地址下单封邮件的状态，请求体为 `{ "isUnread": true }`（未读）或 `{ "isUnread": false }`（已读）
 
+## 邮件退订 API
+
+无需额外配置。后端从邮件头 `List-Unsubscribe` / `List-Unsubscribe-Post`（RFC 2369 / 8058）解析退订地址，缺失时回退扫描正文中发件人标注的退订链接（支持 `退订`、`取消订阅`、`unsubscribe` 等中英文关键词）。前端邮件详情页在能解析到退订方式时显示「取消订阅」按钮，点击即由 Worker 直接请求发件人的退订链接。
+
+- `GET /api/mail/:mail_id/unsubscribe`：查询该邮件可用的退订方式
+- `POST /api/mail/:mail_id/unsubscribe`：执行退订，返回 `{ success, status, oneClick }`
+
+```json
+{"available": true, "url": "https://r.openai.com/asm/unsubscribe/?user_id=...", "mailto": "", "oneClick": false}
+```
+
+执行请求时：`List-Unsubscribe-Post` 声明支持一键退订则用 `POST` 提交 `List-Unsubscribe=One-Click`，否则用 `GET` 访问该链接（与浏览器点击等价）。仅提供 `mailto:` 退订地址的邮件不会由后端代为发信，前端改为给出「通过邮件退订」链接。
+
+用户中心同样支持这两个接口，路径为 `GET|POST /user_api/mail/:mail_id/unsubscribe`，认证使用用户 JWT（`x-user-token`），用于访问当前用户已绑定地址下的邮件。管理后台使用 `GET|POST /admin/mail/:mail_id/unsubscribe` 配合 `x-admin-auth`，可对任意邮件执行退订。
+
 ## admin 获取单封邮件 API
 
 无需邮箱 JWT，通过邮件 ID 获取单封邮件，并使用 `x-admin-auth` 认证。

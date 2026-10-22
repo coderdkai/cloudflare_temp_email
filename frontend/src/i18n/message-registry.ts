@@ -230,6 +230,26 @@ export const MESSAGE_REGISTRY = {
     "size": {
       "en": "Size",
       "zh": "大小"
+    },
+    "unsubscribe": {
+      "en": "Unsubscribe",
+      "zh": "取消订阅"
+    },
+    "unsubscribeTip": {
+      "en": "Unsubscribe from this mailing list? A request is sent directly to the sender's unsubscribe link.",
+      "zh": "确定要取消订阅该邮件列表吗？将直接请求发件人提供的退订链接。"
+    },
+    "unsubscribeSuccess": {
+      "en": "Unsubscribe request sent",
+      "zh": "已发送退订请求"
+    },
+    "unsubscribeFailed": {
+      "en": "Unsubscribe failed",
+      "zh": "退订失败"
+    },
+    "unsubscribeByMail": {
+      "en": "Unsubscribe by email",
+      "zh": "通过邮件退订"
     }
   },
   "components.Turnstile": {

@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 
 import parsed_mail_api from './parsed_mail_api';
 import mails_crud from './mails_crud';
+import unsubscribe_api from './unsubscribe_api';
 import new_address from './new_address';
 import auto_reply from './auto_reply'
 import webhook_settings from './webhook_settings';
@@ -30,6 +31,10 @@ api.get('/api/mails', mails_crud.listMails)
 api.get('/api/mail/:mail_id', mails_crud.getMail)
 api.delete('/api/mails/:id', mails_crud.deleteMail)
 api.patch('/api/mails/:id/read', mails_crud.updateMailReadStatus)
+
+// unsubscribe (List-Unsubscribe header / body link)
+api.get('/api/mail/:mail_id/unsubscribe', unsubscribe_api.getUnsubscribe)
+api.post('/api/mail/:mail_id/unsubscribe', unsubscribe_api.unsubscribe)
 
 // parsed mail (server-side parsed subject/text/html/attachments)
 api.get('/api/parsed_mails', parsed_mail_api.listParsedMails)

@@ -36,6 +36,8 @@ api.get('/admin/mails', admin_mail_api.getMails);
 api.get('/admin/mails_unknow', admin_mail_api.getUnknowMails);
 api.get('/admin/mails/:id', admin_mail_api.getMail);
 api.delete('/admin/mails/:id', admin_mail_api.deleteMail);
+api.get('/admin/mail/:mail_id/unsubscribe', admin_mail_api.getUnsubscribe);
+api.post('/admin/mail/:mail_id/unsubscribe', admin_mail_api.unsubscribe);
 
 // address sender
 api.get('/admin/address_sender', address_sender_api.list);

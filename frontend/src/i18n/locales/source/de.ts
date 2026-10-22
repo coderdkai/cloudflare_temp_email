@@ -666,6 +666,11 @@ export const deMessages = {
   "components.MailContentRenderer.markAsUnread": "Als ungelesen markieren",
   "components.MailContentRenderer.loadRemoteImages": "Bilder laden",
   "components.MailContentRenderer.remoteImagesBlocked": "{count} externe Ressourcen wurden zum Schutz deiner Privatsphäre blockiert",
+  "components.MailContentRenderer.unsubscribe": "Abmelden",
+  "components.MailContentRenderer.unsubscribeTip": "Von dieser Mailingliste abmelden? Es wird direkt der Abmeldelink des Absenders aufgerufen.",
+  "components.MailContentRenderer.unsubscribeSuccess": "Abmeldeanfrage gesendet",
+  "components.MailContentRenderer.unsubscribeFailed": "Abmeldung fehlgeschlagen",
+  "components.MailContentRenderer.unsubscribeByMail": "Per E-Mail abmelden",
   "views.user.AddressManagement.itemCount": "Gesamt",
   "views.index.SimpleIndex.readStatusUpdated": "Lesestatus aktualisiert",
   "views.common.Appearance.autoLoadRemoteImages": "Externe Bilder im E-Mail-Inhalt automatisch laden"
